@@ -1,0 +1,18 @@
+root_data_dir: /srv/data
+model_file_name: prod_model.cbm
+data_params:
+  date_start: '2017-02-01'
+  date_end: '2017-11-30'
+  train_date_start: '2017-02-01'
+  train_date_end: '2017-02-28'
+  valid_date_start: '2017-03-01'
+  valid_date_end: '2017-03-31'
+  backfill_date_start: '2017-04-01'
+  backfill_date_end: '2017-11-30'
+experiment_tracking:
+  experiment_name: 'catboost-params'
+categorical:
+  - seller_zip_code_prefix
+  - customer_zip_code_prefix
+numerical:
+  - delivery_distance_km

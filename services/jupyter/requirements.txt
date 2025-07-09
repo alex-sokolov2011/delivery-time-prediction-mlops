@@ -1,0 +1,14 @@
+numpy
+scipy
+scikit-learn==1.5.1
+mlflow[pipelines]==2.7.1 # 2.12.2 
+minio
+boto3
+hyperopt
+jupyter
+catboost
+pyarrow
+pandas
+python-dotenv
+psycopg[binary]
+evidently==0.4.28
