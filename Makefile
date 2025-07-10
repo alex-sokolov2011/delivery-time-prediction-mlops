@@ -8,9 +8,6 @@ DEV_ENV_ALL = $(shell docker ps -a --filter "name=dev-run" --format "{{.ID}}")
 
 LOCALSTACK_ENV = $(shell docker ps --filter "name=localstack" --format "{{.ID}}")
 
-# Automatically detect the running Jupyter container by name
-JUPYTER_CONTAINER_ID := $(shell docker ps -qf "name=jupyter")
-
 # Docker registry settings (change to your own Docker Hub username)
 DOCKER_USERNAME := sokaa2011
 DOCKER_IMAGE_NAME := delivery_time_prediction
@@ -80,7 +77,7 @@ backfill:
 
 setup-commit-hook: ## Install Git commit-msg hook that enforces allowed prefixes
 	echo '#!/bin/sh' > .git/hooks/commit-msg && \
-	echo 'start_check=$$(head -1 "$$1" | grep -qiE "^(Feature|Fix|Refactor|Docs|Test|Chore|Style|Perf|Revert):")' >> .git/hooks/commit-msg && \
+	echo 'start_check=$$(head -1 "$$1" | grep -qiE "^(Feature|Fix|Refactor|Docs|Test|Chore|Style|Perf|Revert|WIP):")' >> .git/hooks/commit-msg && \
 	echo 'if [ $$? -ne 0 ]; then' >> .git/hooks/commit-msg && \
 	echo '  echo "❌ Commit message must start with one of: Feature:, Fix:, Refactor:, Docs:, Test:, Chore:, Style:, Perf:, Revert:" 1>&2' >> .git/hooks/commit-msg && \
 	echo '  exit 1' >> .git/hooks/commit-msg && \
