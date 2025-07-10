@@ -1,8 +1,8 @@
 import os
 import sys
 
-import pandas as pd
 import mlflow
+import pandas as pd
 from mlflow.entities import ViewType
 from mlflow.tracking import MlflowClient
 
@@ -29,19 +29,20 @@ def convert_params(params_dict):
             converted[k] = v  # fallback: keep as string
     return converted
 
-def train_best_model(train_data_path, config, model_path):
-    top_n=5
+
+def train_best_model(data_path, cfg, out_model_path):
+    top_n = 5
     client = MlflowClient()
     experiment = client.get_experiment_by_name(HPO_EXPERIMENT_NAME)
 
     if experiment is None:
         raise RuntimeError(f"Experiment '{HPO_EXPERIMENT_NAME}' not found")
-    
+
     run = client.search_runs(
         experiment_ids=experiment.experiment_id,
         run_view_type=ViewType.ACTIVE_ONLY,
         max_results=top_n,
-        order_by=["metrics.rmse ASC"]
+        order_by=["metrics.rmse ASC"],
     )[0]
     run_id = run.info.run_id
     best_params_dict = convert_params(run.data.params)
@@ -50,15 +51,15 @@ def train_best_model(train_data_path, config, model_path):
     print("Best run ID:", run.info.run_id)
 
     with mlflow.start_run(run_id=run_id):
-        train_df = pd.read_csv(train_data_path)
-        train_and_save_model(train_df, config, best_params_dict, model_path)
-        
-        mlflow.log_artifact(model_path, artifact_path="model")
+        train_df = pd.read_csv(data_path)
+        train_and_save_model(train_df, cfg, best_params_dict, out_model_path)
+
+        mlflow.log_artifact(out_model_path, artifact_path="model")
         model_uri = f"runs:/{run_id}/model"
         mlflow.register_model(model_uri, name="catboost-best-model")
-        
-    
+
     print('model logged and registered')
+
 
 if __name__ == '__main__':
     config = get_config(sys.argv[1])

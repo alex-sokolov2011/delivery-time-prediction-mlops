@@ -161,7 +161,4 @@ cython_debug/
 #.idea/
 
 
-data_store/postgres_data/
-data_store/minio/
-data_store/mlflow/
-data_store/grafana/
+data_store

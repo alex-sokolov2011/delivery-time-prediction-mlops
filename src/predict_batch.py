@@ -1,8 +1,9 @@
 import os
 import sys
+
 from catboost import CatBoostRegressor
 
-from utils import read_data, get_config, get_features, save_data
+from utils import read_data, save_data, get_config, get_features
 
 if __name__ == '__main__':
 
@@ -19,7 +20,6 @@ if __name__ == '__main__':
 
     df = read_data(data_path, start_dt=None, end_dt=None)
     X, _ = get_features(df)
-    y_pred = model.predict(X)	    
+    y_pred = model.predict(X)
     X['prediction'] = y_pred
     save_data(X, output_data_path)
-    
