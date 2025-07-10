@@ -47,12 +47,15 @@ params-search:
 register-model:
 	docker exec -it ${DEV_ENV} python3 src/register_model.py /srv/src/config.yml
 
-tests:
-	docker exec -it ${DEV_ENV} pytest src/tests/
+test:
+	docker exec -it ${DEV_ENV} pytest src/tests/test_prepare_data.py
 
 integration-tests:
 	docker exec -it ${LOCALSTACK_ENV} awslocal --endpoint-url=http://localhost:4566 s3 mb s3://delivery-prediction && \
 	docker exec -it ${DEV_ENV} pytest src/integration_tests/
+
+install-local-reqs:  ### Install local-only developer dependencies (e.g. httpx for testing FastAPI)
+	python3 -m pip install --upgrade pip && python3 -m pip install --no-cache-dir -r local-requirements.txt
 
 check:  ## Run linters in check mode (black, isort, pylint)
 	isort --check-only . || true
@@ -68,6 +71,9 @@ build-prod: ## Build the production Docker image using the dedicated Dockerfile
 
 run-prod: ## Run the production container locally on port 8090 and test the API
 	docker run -p 8090:8090 -it --rm $(DOCKER_USERNAME)/$(DOCKER_IMAGE_NAME):$(DOCKER_TAG)
+
+test-prod:
+	docker exec -it ${DEV_ENV} pytest src/tests/ci_test_api.py 
 
 prepare-prod: ## Push the production image to Docker Hub (requires `docker login`)
 	docker push $(DOCKER_USERNAME)/$(DOCKER_IMAGE_NAME):$(DOCKER_TAG)
