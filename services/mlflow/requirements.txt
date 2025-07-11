@@ -1,8 +1,7 @@
-numpy
+numpy==1.26.4
 scipy
-# scikit-learn==1.2.2
-mlflow[pipelines]==2.12.2
-minio
-boto3
-hyperopt
-setuptools
+mlflow==2.12.2
+minio==7.2.7
+boto3==1.34.142
+hyperopt==0.2.7
+setuptools==80.9.0
