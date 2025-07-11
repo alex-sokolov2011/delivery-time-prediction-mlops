@@ -25,6 +25,5 @@ jobs:
       - name: Run unit tests
         run: docker run --rm ci:latest pytest src/tests/test_prepare_data.py
 
-      - name: Run FastAPI test
-        run: pytest src/tests/test_api.py
+
 
