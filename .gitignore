@@ -161,4 +161,5 @@ cython_debug/
 #.idea/
 
 
-data_store
+data_store/*
+!data_store/prod_model.cbm
