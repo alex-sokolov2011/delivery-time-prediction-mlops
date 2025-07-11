@@ -92,25 +92,14 @@ setup-commit-hook: ## Install Git commit-msg hook that enforces allowed prefixes
 	@echo "✅ commit-msg hook updated successfully."
 
 test-bad-commit: ## Test hook with invalid commit message (should fail)
-	echo 'Test content' > dummy.txt && \
+	echo 'Test content' > dummy-test-commit.txt && \
 	git add dummy.txt && \
 	git commit -m 'Add code linters' || echo "❌ Commit rejected as expected."
 
 test-good-commit: ## Test hook with valid commit message (should pass)
-	echo 'Test content' > dummy.txt && \
+	echo 'Test content' > dummy-test-commit.txt && \
 	git add dummy.txt && \
 	git commit -m 'Feature: code linters'
-
-clean-commit-test: ## Clean up dummy file and staged changes after commit hook tests
-	@if ! git diff --quiet || ! git diff --cached --quiet; then \
-		echo "❗ Uncommitted changes found. Please commit or stash before cleaning."; \
-		exit 1; \
-	fi
-	@echo "🧼 Cleaning up dummy commit test artifacts..."
-	@rm -f dummy.txt
-	@git reset
-	@git checkout -- .
-	@echo "✅ Clean complete."
 
 pipfreeze:
 	docker exec -it ${DEV_ENV} pip freeze
