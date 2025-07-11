@@ -73,7 +73,7 @@ run-prod: ## Run the production container locally on port 8090 and test the API
 	docker run -p 8090:8090 -it --rm $(DOCKER_USERNAME)/$(DOCKER_IMAGE_NAME):$(DOCKER_TAG)
 
 test-prod:
-	pytest src/tests/test_api.py
+	pytest src/integration_tests/test_api.py
 
 prepare-prod: ## Push the production image to Docker Hub (requires `docker login`)
 	docker push $(DOCKER_USERNAME)/$(DOCKER_IMAGE_NAME):$(DOCKER_TAG)

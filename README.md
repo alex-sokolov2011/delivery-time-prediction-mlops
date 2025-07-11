@@ -1,239 +1,302 @@
-# Ecom delivery time predictiob
+# E2E OWP MLOps project: delivery time prediction
+
 
 ##  Problem description
 
-This project focuses on developing and deploying a delivery time prediction model using e-commerce data.
+This project tackles a common pain point in e-commerce: **unreliable delivery time estimates**.  
+We set out to build an end-to-end pipeline that predicts delivery time based on:
 
-The aim is to *predict the delivery time* for orders based on various factors
+- customer ZIP code  
+- seller ZIP code  
+- delivery distance (in km)
 
-* customer ZIP-code
-* seller XIP-code
-* delivery distance
+The solution includes:
+- batch predictions
+- Real-time API - FastAPI-powered prediction endpoint
 
-We are implement
-* batch prediction (3-6k orders per month)
-* realtime FastAPI prediction service
+The goal was not just to build a model, but to **deliver a reproducible, testable and portable MLOps setup** - something a real-world team could extend or productionize further
 
-
-Model enhances the efficiency of logistics and improving customer satisfaction.
-
-Objectives
-* Develop data preparation pipeline
-* Develop a machine learning model to predict delivery times for e-commerce orders.
-* Implement MLOps practices to automate the deployment, monitoring, and management of the model.
-* Dockerize model using FastAPI service
+### Project Objectives
+- Build a clear, modular **data preparation pipeline**
+- Train and evaluate a **CatBoost regression model** for delivery time
+- Implement core **MLOps tooling**: tracking, packaging, testing, monitoring
+- Run everything locally using **Docker**, **MLflow**, **MinIO**, **Grafana**, and **FastAPI**
 
 ## Project details
 
-### Cloud
+This project is designed to be **fully local and cloud-ready** — without depending on any external managed services.
 
-Used techmologies
-* Localstack (S3) for storing batch predictions
-* MinIO and MLFlow for model tracking
-* Grafana for model monitoring
-* Dockerized FastAPI to deploy model in Cloud (terraform is not used)
+Here’s a breakdown of the tech stack:
 
-![Solution design](./img/solution_design.png)
+- **LocalStack (S3-compatible)** - simulates AWS S3 for storing batch prediction results
+- **MinIO + MLflow** - used for model artifact storage and experiment tracking
+- **Grafana** - tracks data and model quality metrics (e.g. drift, delivery time quantiles)
+- **FastAPI in Docker** - serves the trained model as a RESTful prediction endpoint  
 
-Infrastructure described in [docker-compose.yml](./docker-compose.yml)
+> All services are containerized and orchestrated via `docker-compose`
 
-### Reproducibility
+## Reproducibility
 
-#### Data preparation pipeline
+### Data preparation pipeline
 
-First, prepare directory structure for data. Command will create `data_store` directory and all subdirectories.
+To ensure everything runs the same way across machines, the project includes Makefile targets for setup and reproducibility.
 
-```shell
+Start by creating the required folder structure:
+
+```bash
 make prepare-dirs
 ```
+Then, download the dataset using the automated script:
 
-Download `.zip` archive from the [kaggle competition](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) and put the archive to the directory `data_store/dataset`. 
-
-Build and run docker image for local development
-```shell
-make run-dev
+```bash
+make download-data
 ```
+This command uses the [`kagglehub`](https://pypi.org/project/kagglehub/) library to fetch the **Brazilian E-Commerce Public Dataset** directly from Kaggle and unpacks it into: `data_store/dataset/`  
+No manual `.zip` handling required — the pipeline is fully automated and reproducible
 
-Run data extraction script to
-* unpack .zip 
-* prepare train and valid data
+To preprocess the raw data and generate training/validation datasets, run:
 
-```shell
+```bash
 make prepare-data
 ```
+This step handles everything:
+- joins and cleans the source tables
+- computes delivery time in hours and distance in kilometers using geo-coordinates
+- applies filtering logic to remove outliers
+- saves two files: `train_dataset.csv` and `valid_dataset.csv`
 
-After params search and registering the model (see sections below) your will get dockerized FastAPI model ready to deploy.
+Next, run hyperparameter tuning using `Hyperopt` to find the best CatBoost configuration:
 
-### Workflow orchestration
-
-Basic workflow orchestration
-* config stored in [config.yml](./src/config.yml)
-* batch model training orcestrated with congig-parametrized script [batch_prediction_backfill.py](./src/batch_prediction_backfill.py)
-
-
-### Experiment tracking & model registry
-
-Set up MLFlow 
-
-Postgres
-
-```shell
-make run-postgres
+```bash
+make params-search
 ```
 
-Terminate  Postgres, run MLFlow
-```shell
-make run-mlflow
+This kicks off an MLflow-backed optimization process — typically running 15 trials — and logs metrics like RMSE for each run.
+
+All runs are tracked in the MLflow UI, including parameters, metrics, and artifacts.
+
+You can open [http://localhost:5000](http://localhost:5000) to explore the experiment and see which configuration achieved the lowest RMSE
+
+Once the best set of parameters is selected, you can train the final model and register it:
+```bash
+make register-model
 ```
+![MLflow UI Model](./img/mlflow_best_run.png)
 
-Terminate ML flow, run Jupyter
-```shell
-make run-jupyter
-```
+The model artifact is also saved to a local S3-compatible store (MinIO), and visible via the MinIO console:
 
-Open [EDA](./src/notebooks/EDA.ipynb) and view charts and dasboards
+![MinIO model artifact](./img/minio_model_artifact.png)
 
-Run params search. After script finished check [MLFlow](http://localhost:8000/)
+### Testing
 
-```shell
-make run params-search
-```
+Before moving on to code style checks and deployment, we run unit and integration tests to make sure everything works as expected
 
-We will auromatically change best model params (== with lowest RMSE)
+#### Unit tests
 
-![alt text](mlflow.png)
-
-Train and register best model
-```shell
- make register-model
-```
-
-Ready! Model trained and registered with MLFlow
-
-### Model deployment
-
-Model Dockerized and ready to deploy in Cloud
-
-Build production image and push to Docker registry [adzhumurat/delivery_time_prediction](https://hub.docker.com/repository/docker/adzhumurat/delivery_time_prediction/general)
-```shell
-make prepare-prod
-```
-
-Run FastAPI locally in Docker
-```shell
-make run-prod
-```
-
-Test from curl
-```shell
-curl -X POST http://127.0.0.1:8090/delivery_time \
-    -H "Content-Type: application/json" \
-    -d '{"seller_zip_code_prefix":12345, "customer_zip_code_prefix":54321, "delivery_distance_km":50}'
-```
-
-Result: delivery time predicted in JSON format!
-```json
-{"seller_zip_code_prefix":12345,"customer_zip_code_prefix":54321,"delivery_distance_km":50,"delivery_time":60.0}
-```
-
-
-# Model monitoring
-
-Grafana is used for model monitoring. We use [batch_prediction_backfill.py](./src/batch_prediction_backfill.py) script that calculates and reports metrics
-
-Backfill data and check dashboards in [grafana](http://localhost:3000/)
-
-```shell
-make backfill
-```
-
-We are able to monitor
-* 95% quantile for delivery time
-* num drifted columns
-* share of most frequent value
-
-![Grafana dashboards](./img/grafana_dashboards.png)
-
-## Best practices
-
-### Tests
-
-[tests](./src/tests) - unitests (will use that for for ci/cd below)
-
-```shell
+```bash
 make tests
 ```
 
-[integration_tests](./src/integration_tests) - for integration tests 
+This executes tests in src/tests/, including checks for data preprocessing logic
 
-```shell
+#### Integration tests
+
+These validate how different parts of the pipeline work together - for example, S3 interactions and batch prediction
+
+```bash
 make integration-tests
 ```
 
-### Code quality 
+This will:
 
-Linters runs `autopep8 --in-place --aggressive --aggressive --recursive .`
-```shell
-make lint
+- create an S3 bucket in LocalStack
+- upload a sample batch of input data to the bucket
+- run the `predict_batch.py` script inside Docker, using the registered model
+- write the predictions back to S3
+- load and verify the prediction output, checking structure and numerical results
+
+These tests ensure that:
+- the batch pipeline works end-to-end
+- MinIO (via LocalStack) correctly simulates S3
+- the model can be applied outside of training
+
+### Code quality & formatting
+
+To ensure clean and consistent code style, we use:
+
+- `isort` - for import sorting
+- `black` - for auto-formatting
+- `pylint` - for code quality and basic static analysis
+
+---
+
+Install developer-only requirements (used locally, not in Docker builds):
+
+```bash
+make install-local-reqs
+```
+Then check the formatting and code quality:
+
+```bash
+make check
+```
+If any issues are found, fix them automatically with:
+```bash
+make format
+```
+This will reformat files using isort and black:
+
+
+### Model deployment
+
+Once the model is trained and registered, we can package it into a production-ready API using FastAPI and Docker
+
+#### Build the production image
+
+Use the following command to build the image from `services/production/Dockerfile`:
+
+```bash
+make build-prod
 ```
 
-### Pre-commit hooks
+This will:
 
-every commit has to be checked with `.git/hooks/commit-msg`
+- copy the trained `prod_model.cbm` into the image
+- install only runtime dependencies from `requirements.txt`
+- include only the necessary code (no dev tools, no training scripts)
+- expose a FastAPI app that serves predictions on port `8090`
 
-```shell
-start_check=$(head -1 $1 | grep -qiE "^(Feature|Fix):")
-if [ $? -ne 0 ]; then
-    echo "Commit message should start with 'Feature:' or 'Fix:'." 1>&2
-    exit 1
-fi
+> You can also tag and push this image to your own Docker registry, if needed
+
+#### Run FastAPI locally in Docker
+```bash
+make run-prod
 ```
 
-Example
-```shell
-git commit -m 'Add code linters'
+#### Run production test locally
+
+Before pushing the image to a Docker registry, it's good practice to **validate the production build end-to-end**
+
+We include a dedicated test that:
+
+- starts the FastAPI app from the Dockerized image
+- sends a real request to `/delivery_time`
+- checks response code and payload structure
+
+```bash
+make test-prod
+```
+This ensures the containerized model is healthy and serving real predictions — exactly as it will in production
+
+
+#### Push the image to Docker Hub
+
+Once you've verified the production image works locally, you can push it to Docker Hub (or any other registry).
+
+Make sure you're logged in:
+
+```bash
+docker login
+```
+Then run:
+```bash
+make prepare-prod
+```
+> The image name and tag are configured via environment variables in your Makefile
+
+After the push completes, your FastAPI model will be available remotely and ready for deployment
+
+### Model monitoring
+
+To monitor prediction quality over time, we use **Grafana dashboards fed by Evidently reports**.  
+These reports are generated monthly using a script that simulates real production usage.
+
+Run:
+
+```bash
+make backfill
 ```
 
-Result
+This executes the `batch_prediction_backfill.py` script, which:
+
+- loads the registered model from disk
+- generates predictions month by month over historical data
+- calculates statistical and drift metrics using Evidently
+- inserts these metrics into a dedicated Postgres table (`model_metrics`)
+
+You can then open [Grafana](http://localhost:3000) to view dashboards based on these metrics.
+
+The dashboards are automatically provisioned and include time-series visualizations for:
+
+- **95% quantile** of predicted delivery time (helps track outlier behavior)
+- **Number of drifted columns** between reference and current data
+- **Share of most frequent seller ZIP codes** (proxy for categorical stability)
+- **Missing value ratio** in incoming data
+
+This gives you visibility into how model performance and data quality evolve over time - a core part of real-world MLOps.
+
+
+### Pre-commit message hook
+
+To enforce commit message conventions across the team (or just for yourself), we include a local Git hook that checks message prefixes.
+
+Install the hook with:
+
+```bash
+make setup-commit-hook
 ```
-Commit message must contain 'Feature' or 'Fix'.
+This adds a commit-msg hook that allows only messages starting with:
+`Feature:, Fix:, Refactor:, Docs:, Test:, Chore:, Style:, Perf:, Revert:, WIP`
+
+#### Example usage
+
+Try a bad commit (should fail):
+```bash
+make test-bad-commit
 ```
 
-Correct version: `git commit -m 'Feature: code linters' `
+Try a good commit:
+```bash
+make test-good-commit
+```
+> Helps enforce meaningful commit history and team-wide consistency
 
-### Makefile
+### Makefile automation
 
-[Makefile](./Makefile) used for an automation
+The entire workflow is streamlined via a clean and readable [Makefile](./Makefile),  
+which lets you run all the key project tasks with simple commands.
+
+You can also list all available targets with:
+
+```bash
+make help
+```
+This will print a list of documented commands with short descriptions - helpful for onboarding or revisiting the project later.
 
 ### CI/CD pipeline
 
-For every merge requests we run tests
+A GitHub Actions workflow is included to automate testing and validation on every push and pull request to the `main` branch.
 
-![test_running](img/test_running.png)
+It runs the following steps:
 
-If smth is wrong with your code test will be failed
+1. **Builds a fresh Docker image** (`ci:latest`) using only production code and dependencies
+2. **Runs unit tests** (e.g. data prep validation)
+3. **Starts the FastAPI service** from the built image
+4. **Sends a real POST request** to `/delivery_time` with sample payload
+5. **Checks the response** structure and status code
+6. **Fails the pipeline** if the response is incorrect or the service doesn't start
 
-![test_failed](img/test_failed.png)
+All of this is configured in [`docker-tests.yml`](./.github/workflows/docker-tests.yml).
 
-Otherwise you can merge
+Examples from real CI runs:
 
-![test_succeed](img/test_succeed.png)
+- ✅ All checks passed
 
+  ![test_succeed](img/test_succeed.png)
 
-# Dagster
+- ❌ Test failure blocks the merge
 
-DO NOT IMPLEMENTED - for future improvements
+  ![test_failed](img/test_failed.png)
 
-https://www.skytowner.com/explore/getting_started_with_dagster
-
-```shell
-pyenv install 3.10 && \
-pyenv virtualenv 3.10 delivery-prediction-env && \
-source ~/.pyenv/versions/delivery-prediction-env/bin/activate && \
-pip install --upgrade pip && \
-pip install -r dagster_requirements.txt
-```
-
-Materialization
-http://localhost:3000/assets
+> This ensures your production image always works — no surprises after `docker push`
 
