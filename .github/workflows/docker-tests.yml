@@ -25,6 +25,23 @@ jobs:
       - name: Run unit tests
         run: docker run --rm ci:latest pytest src/tests/test_prepare_data.py
 
-      - name: Run FastAPI test
-        run: docker run --rm --network host ci:latest pytest src/tests/test_api.py
+      - name: Smoke test FastAPI endpoint
+        run: |
+          sleep 3  # wait for API to be ready
+          response=$(curl -s -w "%{http_code}" -o /tmp/api_response.json http://localhost:8090/delivery_time \
+            -H "Content-Type: application/json" \
+            -d '{"seller_zip_code_prefix": 9350, "customer_zip_code_prefix": 3149, "delivery_distance_km": 18}')
+          
+          if [ "$response" != "200" ]; then
+            echo "❌ API returned unexpected status code: $response"
+            exit 1
+          fi
+
+          if ! grep -q "delivery_time" /tmp/api_response.json; then
+            echo "❌ Response does not contain 'delivery_time'"
+            cat /tmp/api_response.json
+            exit 1
+          fi
+
+          echo "✅ FastAPI endpoint passed basic check"
 
