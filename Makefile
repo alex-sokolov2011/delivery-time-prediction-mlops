@@ -93,12 +93,12 @@ setup-commit-hook: ## Install Git commit-msg hook that enforces allowed prefixes
 
 test-bad-commit: ## Test hook with invalid commit message (should fail)
 	echo 'Test content' > dummy-test-commit.txt && \
-	git add dummy.txt && \
+	git add dummy-test-commit.txt && \
 	git commit -m 'Add code linters' || echo "❌ Commit rejected as expected."
 
 test-good-commit: ## Test hook with valid commit message (should pass)
 	echo 'Test content' > dummy-test-commit.txt && \
-	git add dummy.txt && \
+	git add dummy-test-commit.txt && \
 	git commit -m 'Feature: code linters'
 
 pipfreeze:
