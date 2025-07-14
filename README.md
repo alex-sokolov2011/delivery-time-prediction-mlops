@@ -3,7 +3,7 @@
 
 ##  Problem description
 
-This project tackles a common pain point in e-commerce: **unreliable delivery time estimates**.  
+This one-week project tackles a common pain point in e-commerce: **unreliable delivery time estimates**.  
 We set out to build an end-to-end pipeline that predicts delivery time (in days) from order to delivery, based on:
 
 - seller ZIP code prefix  
@@ -109,7 +109,7 @@ Before moving on to code style checks and deployment, we run unit and integratio
 make tests
 ```
 
-This executes tests in src/tests/, including checks for data preprocessing logic
+This executes test test_prepare_data in src/tests/, including checks for data preprocessing logic
 
 #### Integration tests
 
@@ -192,7 +192,7 @@ Before pushing the image to a Docker registry, it's good practice to **validate 
 We include a dedicated test that:
 
 - starts the FastAPI app from the Dockerized image
-- sends a real request to `/delivery_time`
+- sends a real request to `http://127.0.0.1:8090/delivery_time`
 - checks response code and payload structure
 
 ```bash
@@ -223,8 +223,6 @@ After the push completes, your FastAPI model will be available remotely and read
 To monitor prediction quality over time, we use **Grafana dashboards fed by Evidently reports**.  
 These reports are generated weekly using a script that simulates real production usage.
 
-Run:
-
 ```bash
 make backfill
 ```
@@ -240,9 +238,9 @@ You can then open [Grafana](http://localhost:3000) to view dashboards based on t
 
 The dashboards are automatically provisioned and include time-series visualizations for:
 
+- `share_missing_values` — percentage of missing values in input data
 - `prediction_drift` — statistical drift in model output
 - `num_drifted_columns` — number of input columns with drift
-- `share_missing_values` — percentage of missing values in input data
 - `value_range_share_in_range` — share of predictions falling in the expected value range
 - `prediction_corr_with_features` — correlation of predictions with input features
 
@@ -321,7 +319,7 @@ Examples from real CI runs:
 | **Problem description**                      | ✅ 2/2     | Clearly described and well-scoped at the top of the README            |
 | **Cloud / LocalStack usage**                 | ✅ 2/4     | LocalStack + MinIO used for S3-compatible storage and emulation       |
 | **Experiment tracking & model registry**     | ✅ 4/4     | MLflow used for both tracking and model registration                  |
-| **Workflow orchestration**                   | ⚠️ 0/4     | Not implemented (Dagster mentioned as future work)                    |
+| **Workflow orchestration**                   | ⚠️ 0/4     | Not implemented                     |
 | **Model deployment**                         | ✅ 4/4     | Dockerized FastAPI service, tested and ready for deployment           |
 | **Model monitoring**                         | ✅ 2/4     | Batch monitoring via Evidently + Grafana; no alerting or automation   |
 | **Reproducibility**                          | ✅ 4/4     | Fully reproducible with Makefile, dataset automation, dependency locking |

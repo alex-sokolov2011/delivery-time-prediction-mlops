@@ -121,7 +121,7 @@ if __name__ == '__main__':
             ColumnDriftMetric(column_name='prediction'),
             DatasetDriftMetric(),
             DatasetMissingValuesMetric(),
-            ColumnValueRangeMetric(column_name='prediction'),
+            ColumnValueRangeMetric(column_name='prediction', left=0, right=28),
             ColumnCorrelationsMetric(column_name='prediction'),
         ]
     )

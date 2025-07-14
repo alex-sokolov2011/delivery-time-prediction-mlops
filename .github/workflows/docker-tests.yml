@@ -34,7 +34,7 @@ jobs:
         run: |
           response=$(curl -s -w "%{http_code}" -o /tmp/api_response.json http://localhost:8090/delivery_time \
             -H "Content-Type: application/json" \
-            -d '{"seller_zip_code_prefix": 9350, "customer_zip_code_prefix": 3149, "delivery_distance_km": 18}')
+            -d '{"seller_zip_code_prefix": 9350, "customer_lat": -23.57698293467452, "customer_lng": -46.58716127427677}')
 
           if [ "$response" != "200" ]; then
             echo "❌ API returned unexpected status code: $response"
