@@ -1,0 +1,56 @@
+name: Run Tests in Docker
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build CI Docker image
+        run: make build-ci
+
+      - name: Run unit tests
+        run: docker run --rm ci:latest pytest src/tests/test_prepare_data.py
+
+      - name: Run FastAPI app in background
+        run: |
+          docker run -d --rm -p 8090:8090 --name fastapi-app ci:latest
+          sleep 5  # wait for FastAPI to start
+
+      - name: Smoke test FastAPI via curl
+        run: |
+          response=$(curl -s -w "%{http_code}" -o /tmp/api_response.json http://localhost:8090/delivery_time \
+            -H "Content-Type: application/json" \
+            -d '{"seller_zip_code_prefix": 9350, "customer_zip_code_prefix": 3149, "delivery_distance_km": 18}')
+
+          if [ "$response" != "200" ]; then
+            echo "❌ API returned unexpected status code: $response"
+            exit 1
+          fi
+
+          if ! grep -q "delivery_time" /tmp/api_response.json; then
+            echo "❌ Response does not contain 'delivery_time'"
+            cat /tmp/api_response.json
+            exit 1
+          fi
+
+          echo "✅ FastAPI endpoint passed smoke test"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop fastapi-app || true
+

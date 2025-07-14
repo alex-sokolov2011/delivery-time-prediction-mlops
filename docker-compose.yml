@@ -1,0 +1,128 @@
+services:
+  postgres:
+    image: postgres:13.3
+    container_name: db
+    env_file:
+      - ./.env
+    depends_on:
+      - adminer
+    ports:
+      - 15432:5432  # changed host port to avoid conflict with local PostgreSQL
+    expose:
+      - 5432
+    networks:
+      - prj_network
+    volumes:
+      - ./data_store/postgres_data:/var/lib/postgresql/data
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "18080:8080"  # changed host port to avoid conflict with local web apps on port 8080
+    networks:
+      - prj_network
+  grafana:
+    image: grafana/grafana
+    build:
+      context: ./services/grafana
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./services/grafana/config/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+      - ./services/grafana/config/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./services/grafana/dashboards:/opt/grafana/dashboards
+    networks:
+      - prj_network
+    restart: always
+  mlflow:
+    build:
+      context: ./services/mlflow
+    depends_on:
+      - minio
+    env_file:
+      - .env
+    volumes:
+      - ./data_store/mlflow:/srv/mlflow
+      - ./services/mlflow/src:/srv/src
+    container_name: mlflow_container_ui
+    ports:
+      - 5000:5000
+    networks:
+      - prj_network
+    command: >
+      serve
+  minio:
+    build:
+      context: ./services/minio
+    env_file:
+      - .env
+    volumes:
+      - ./data_store/minio:/data
+    networks:
+      prj_network:
+        aliases:
+          - backtier_s3
+    container_name: backtier_s3
+    ports:
+      - 9001:9001
+      - 9000:9000
+  jupyter:
+    build:
+      context: ./services/jupyter
+    env_file:
+      - .env
+    volumes:
+      - ./data_store:/srv/data
+      - ./src:/srv/src
+    container_name: jupyter
+    ports:
+      - 8899:8888
+    networks:
+      - prj_network
+    command: >
+      jupyter notebook src
+      --ip 0.0.0.0
+      --port 8888
+      --allow-root
+      --no-browser
+      --NotebookApp.token=''
+      --NotebookApp.password=''
+  dev:
+    build:
+      context: .
+    depends_on:
+      - mlflow
+      - postgres
+      - grafana
+      - localstack
+    env_file:
+      - .env
+    volumes:
+      - ./data_store:/srv/data
+      - ./src:/srv/src
+    container_name: service
+    ports:
+      - 8010:8000
+    networks:
+      - prj_network
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+      - "4572:4572"
+    env_file:
+      - .env
+    networks:
+      prj_network:
+        aliases:
+          - localstack
+    depends_on:
+      postgres:
+        condition: service_started
+networks:
+  prj_network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
