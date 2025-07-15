@@ -16,3 +16,4 @@ categorical:
 numerical:
   - customer_lat
   - customer_lng
+prefect_root_data_dir: ./data_store

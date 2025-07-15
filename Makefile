@@ -21,6 +21,7 @@ prepare-dirs: ## Create local directories for mounted volumes (Postgres, MinIO, 
 	mkdir -p ${CURRENT_DIR}/data_store/minio || true && \
 	mkdir -p ${CURRENT_DIR}/data_store/mlflow || true && \
 	mkdir -p ${CURRENT_DIR}/data_store/dataset || true && \
+	mkdir -p ${CURRENT_DIR}/data_store/prefect || true && \
 	mkdir -p ${CURRENT_DIR}/data_store/grafana || true
 
 run-dev: ## Run dev container in detached mode
@@ -110,8 +111,19 @@ run-jupyter: ## Run Jupyter Notebook container in detached mode
 run-dagster: ## Start Dagster webserver for local orchestration
 	dagster-webserver -m services.dagster_code
 
-run-prefect: ## Start Prefect server locally
+prefect-prepare-data: ## Run Prefect flow for data preparation (merging & splitting datasets)
+	python src/prefect_prepare_data.py
+
+run-prefect: ## Start Prefect server locally (runs until stopped)
 	prefect server start
+
+prefect-all: ## Create Prefect work pool and start worker (runs until stopped)
+	export PREFECT_API_URL=http://127.0.0.1:4200/api && \
+	prefect work-pool create --type process default-agent-pool && \
+	prefect worker start --pool default-agent-pool
+
+run-prefect-deploy: ## Create Prefect deployment and schedule it (runs until stopped)
+	python src/prefect_deploy_prepare.py
 
 clear-db-dirs: ## Remove local Postgres data directory (clears DB data)
 	rm -rf ${CURRENT_DIR}/data_store/postgres_data || true
