@@ -312,9 +312,64 @@ Examples from real CI runs:
 
 > This ensures your production image always works - no surprises after `docker push`
 
+### Prefect orchestration
+
+We use **Prefect 3** to orchestrate the data preparation pipeline and demonstrate scheduled automation in a production-like setting.
+
+#### Run once (ad-hoc execution)
+
+You can trigger the pipeline manually by executing:
+
+```bash
+make run-prefect-prepare
+```
+
+This runs the flow defined in [`prefect_prepare_data.py`](src/prefect_prepare_data.py) and:
+
+- merges raw tables
+- calculates delivery time
+- splits into train/validation
+- saves outputs into `data_store/prefect/`
+
+The Prefect UI will show a new run and detailed logs.
+
+#### Run with Prefect server and scheduler
+
+To launch full orchestration with scheduling and workers:
+
+```bash
+make run-prefect
+```
+
+Then, in another terminal, register and start a worker:
+
+```bash
+make prefect-all
+```
+
+You should now be able to open [http://localhost:4200](http://localhost:4200) to access the **Prefect UI**, where:
+
+- the flow **Prepare Data** is deployed
+- it is scheduled to run every 5 minutes
+- completed runs are visualized on the dashboard
+
+To deploy the flow with a schedule:
+
+```bash
+make run-prefect-deploy
+```
+
+This uses [`prefect_deploy_prepare.py`](src/prefect_deploy_prepare.py) to register the flow and attach a schedule.
+
+> ⚙️ The deployment is set to run every 5 minutes by default. You can modify the cron schedule in the deploy script.
+
+![Prefect Dashboard](img/prefect_dashboard.png)
+
+![Prefect Deployment](img/prefect_deployment.png)
+
 ## Future improvements
 
-- Prefect-based orchestration pipeline (not implemented)
+- Prefect-based orchestration full pipeline with Prometheus (not implemented)
 
 ## Evaluation Checklist
 
@@ -323,7 +378,7 @@ Examples from real CI runs:
 | **Problem description**                      |  2/2     | Clearly described and well-scoped at the top of the README            |
 | **Cloud / LocalStack usage**                 |  2/4     | LocalStack + MinIO used for S3-compatible storage and emulation       |
 | **Experiment tracking & model registry**     |  4/4     | MLflow used for both tracking and model registration                  |
-| **Workflow orchestration**                   |  0/4     | Not implemented                     |
+| **Workflow orchestration**                   |  2/4     | Basic workflow orchestration                     |
 | **Model deployment**                         |  4/4     | Dockerized FastAPI service, tested and ready for deployment           |
 | **Model monitoring**                         |  2/4     | Batch monitoring via Evidently + Grafana; no alerting or automation   |
 | **Reproducibility**                          |  4/4     | Fully reproducible with Makefile, dataset automation, dependency locking |
@@ -337,4 +392,4 @@ Examples from real CI runs:
 - [x] Pre-commit hooks
 - [x] CI/CD pipeline
 
->  **Total score: 24 / 32**
+>  **Total score: 26 / 32**
