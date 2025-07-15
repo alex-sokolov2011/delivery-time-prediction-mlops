@@ -23,7 +23,7 @@ The goal was not just to build a model, but to **deliver a reproducible, testabl
 
 ## Project details
 
-This project is designed to be **fully local and cloud-ready** — without depending on any external managed services.
+This project is designed to be **fully local and cloud-ready** - without depending on any external managed services.
 
 Here’s a breakdown of the tech stack:
 
@@ -53,7 +53,7 @@ Then, download the dataset using the automated script:
 make download-data
 ```
 This command uses the [`kagglehub`](https://pypi.org/project/kagglehub/) library to fetch the **Brazilian E-Commerce Public Dataset** directly from Kaggle and unpacks it into: `data_store/dataset/`  
-No manual `.zip` handling required — the pipeline is fully automated and reproducible
+No manual `.zip` handling required - the pipeline is fully automated and reproducible
 
 To preprocess the raw data and generate training/validation datasets, run:
 
@@ -83,7 +83,7 @@ Next, run hyperparameter tuning using `Hyperopt` to find the best CatBoost confi
 make params-search
 ```
 
-This kicks off an MLflow-backed optimization process — typically running 15 trials — and logs metrics like RMSE for each run.
+This kicks off an MLflow-backed optimization process - typically running 15 trials - and logs metrics like RMSE for each run.
 
 All runs are tracked in the MLflow UI, including parameters, metrics, and artifacts.
 
@@ -198,7 +198,7 @@ We include a dedicated test that:
 ```bash
 make test-prod
 ```
-This ensures the containerized model is healthy and serving real predictions — exactly as it will in production
+This ensures the containerized model is healthy and serving real predictions - exactly as it will in production
 
 
 #### Push the image to Docker Hub
@@ -238,11 +238,11 @@ You can then open [Grafana](http://localhost:3000) to view dashboards based on t
 
 The dashboards are automatically provisioned and include time-series visualizations for:
 
-- `share_missing_values` — percentage of missing values in input data
-- `prediction_drift` — statistical drift in model output
-- `num_drifted_columns` — number of input columns with drift
-- `value_range_share_in_range` — share of predictions falling in the expected value range
-- `prediction_corr_with_features` — correlation of predictions with input features
+- `share_missing_values` - percentage of missing values in input data
+- `prediction_drift` - statistical drift in model output
+- `num_drifted_columns` - number of input columns with drift
+- `value_range_share_in_range` - share of predictions falling in the expected value range
+- `prediction_corr_with_features` - correlation of predictions with input features
 
 This gives you visibility into how model performance and data quality evolve over time - a core part of real-world MLOps.
 
@@ -310,21 +310,25 @@ Examples from real CI runs:
 
   ![test_failed](img/test_failed.png)
 
-> This ensures your production image always works — no surprises after `docker push`
+> This ensures your production image always works - no surprises after `docker push`
 
-## ✅ Evaluation Checklist
+## Future improvements
+
+- Prefect-based orchestration pipeline (not implemented)
+
+## Evaluation Checklist
 
 | Criteria                                      | Score     | Notes                                                                 |
 |----------------------------------------------|-----------|-----------------------------------------------------------------------|
-| **Problem description**                      | ✅ 2/2     | Clearly described and well-scoped at the top of the README            |
-| **Cloud / LocalStack usage**                 | ✅ 2/4     | LocalStack + MinIO used for S3-compatible storage and emulation       |
-| **Experiment tracking & model registry**     | ✅ 4/4     | MLflow used for both tracking and model registration                  |
-| **Workflow orchestration**                   | ⚠️ 0/4     | Not implemented                     |
-| **Model deployment**                         | ✅ 4/4     | Dockerized FastAPI service, tested and ready for deployment           |
-| **Model monitoring**                         | ✅ 2/4     | Batch monitoring via Evidently + Grafana; no alerting or automation   |
-| **Reproducibility**                          | ✅ 4/4     | Fully reproducible with Makefile, dataset automation, dependency locking |
+| **Problem description**                      |  2/2     | Clearly described and well-scoped at the top of the README            |
+| **Cloud / LocalStack usage**                 |  2/4     | LocalStack + MinIO used for S3-compatible storage and emulation       |
+| **Experiment tracking & model registry**     |  4/4     | MLflow used for both tracking and model registration                  |
+| **Workflow orchestration**                   |  0/4     | Not implemented                     |
+| **Model deployment**                         |  4/4     | Dockerized FastAPI service, tested and ready for deployment           |
+| **Model monitoring**                         |  2/4     | Batch monitoring via Evidently + Grafana; no alerting or automation   |
+| **Reproducibility**                          |  4/4     | Fully reproducible with Makefile, dataset automation, dependency locking |
 
-### ✅ Best practices checklist (6/6)
+### Best practices checklist (6/6)
 
 - [x] Unit tests
 - [x] Integration tests
@@ -333,4 +337,4 @@ Examples from real CI runs:
 - [x] Pre-commit hooks
 - [x] CI/CD pipeline
 
-> ✅ **Total score: 24 / 32**
+>  **Total score: 24 / 32**
