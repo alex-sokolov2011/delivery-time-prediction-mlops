@@ -106,7 +106,7 @@ Before moving on to code style checks and deployment, we run unit and integratio
 #### Unit tests
 
 ```bash
-make tests
+make test
 ```
 
 This executes test test_prepare_data in src/tests/, including checks for data preprocessing logic

@@ -163,3 +163,4 @@ cython_debug/
 
 data_store/*
 !data_store/prod_model.cbm
+src/notebooks/2.ipynb

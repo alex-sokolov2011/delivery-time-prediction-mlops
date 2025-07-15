@@ -22,7 +22,8 @@ rand = random.Random()
 
 create_table_statement = """
 drop table if exists model_metrics;
-create table model_metrics(
+drop table if exists public.model_metrics;
+create table public.model_metrics(
 	timestamp timestamp,
 	prediction_drift float,
 	num_drifted_columns integer,
@@ -75,14 +76,19 @@ def calculate_metrics_postgresql(
     prediction_drift = result['metrics'][0]['result']['drift_score']
     num_drifted_columns = result['metrics'][1]['result']['number_of_drifted_columns']
     share_missing_values = result['metrics'][2]['result']['current']['share_of_missing_values']
-    value_range_result = result['metrics'][3]['result']
+    value_range_result = result['metrics'][3]['result']['reference']
     value_range_share_in_range = value_range_result.get('share_in_range', 0.0)
 
     correlations_result = result['metrics'][4]['result']
-    prediction_corr_with_features = correlations_result.get('pearson', {}).get('abs_mean', 0.0)
+    pearson_y = correlations_result.get('current', {}).get('pearson', {}).get('values', {}).get('y', [])
+
+    if pearson_y:
+        prediction_corr_with_features = sum(abs(val) for val in pearson_y) / len(pearson_y)
+    else:
+        prediction_corr_with_features = 0.0
 
     curr.execute(
-        "insert into model_metrics("
+        "insert into public.model_metrics("
         "timestamp, prediction_drift, num_drifted_columns, share_missing_values, value_range_share_in_range, prediction_corr_with_features"
         ") values (%s, %s, %s, %s, %s, %s)",
         (
