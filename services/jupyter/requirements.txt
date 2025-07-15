@@ -13,3 +13,4 @@ python-dotenv
 psycopg-binary==3.2.1
 evidently==0.4.28
 statsmodels==0.14.5
+seaborn
