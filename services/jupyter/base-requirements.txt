@@ -1,0 +1,9 @@
+numpy==1.26.4
+pandas==2.2.2
+scipy
+scikit-learn==1.5.1
+jupyter
+pyarrow==15.0.2
+python-dotenv
+statsmodels==0.14.5
+seaborn==0.13.2
