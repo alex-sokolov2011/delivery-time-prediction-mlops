@@ -47,7 +47,15 @@ Start by creating the required folder structure:
 ```bash
 make prepare-dirs
 ```
-Then, download the dataset using the automated script:
+
+Then spin up the full development environment to make sure all required services (Postgres, MinIO, MLflow, Grafana, etc.) are up and running:
+
+```bash
+make run-dev
+```
+
+This will start the local stack defined in docker-compose.yml and ensure all components are available for the subsequent steps.  
+Once the containers are running, you can proceed with downloading the dataset using the automated script.
 
 ```bash
 make download-data
