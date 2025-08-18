@@ -1,89 +1,11 @@
-# Delivery Time Prediction - End-to-End MLOps (local S3: MinIO + LocalStack, cloud-ready)
+# Contributing to Delivery Time Prediction — End-to-End MLOps
 
-[![License](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)
-![Python](https://img.shields.io/badge/Python-3.12-blue)
-![Docker](https://img.shields.io/badge/Docker-ready-informational)
-![uv](https://img.shields.io/badge/uv-fast%20installs-success)
-![MLflow](https://img.shields.io/badge/MLflow-tracking-lightgrey)
-![FastAPI](https://img.shields.io/badge/FastAPI-serving-brightgreen)
-![MinIO](https://img.shields.io/badge/MinIO-artifacts-orange)
-![Grafana](https://img.shields.io/badge/Grafana-monitoring-yellow)
+Thanks for your interest in contributing!  
+This document explains how to set up your environment, run the stack, and follow the contribution rules.
 
 ---
 
-## With this project
-Spin up a **laptop-only, cloud-ready** MLOps stack in minutes and learn by doing. You’ll prepare data, train a CatBoost model, **track runs in MLflow**, store artifacts in **MinIO (S3)**, **serve** predictions via FastAPI, and **visualize** health in Grafana. The workflow is **Dockerized**, **uv-powered** (fast, deterministic installs), and **Makefile-driven** so every step is reproducible and easy to tweak. Treat it as a small but realistic scaffold you can fork, extend, and ship.
-> Storage backends: MLflow artifacts → **MinIO** (S3-compatible). Batch/backfill exercises → **LocalStack S3**. Two endpoints and two credential sets by design to practice both paths and mimic cloud migration.
-
-
-### Who is this for
-- **Beginners learning MLOps locally** - a compact, hands-on template to understand data prep, training, tracking, serving, and monitoring end-to-end
-- **Practitioners adapting a small scaffold** - sensible defaults, clean structure, and clear extension points (dataset, features, training, serving, metrics)
-
-## ⚡ Quickstart
-
-### 1) Clone the repo
-```bash
-git clone https://github.com/alex-sokolov2011/delivery-time-prediction-mlops.git
-cd delivery-time-prediction-mlops
-```
-
-### 2) Requirements
-
-* **Docker Engine** + **Docker Compose plugin**
-* **Git**
-* **make** (GNU Make)
-* 10-12 GB free disk space
-
-### Install Docker and Docker Compose
-
-Make sure you have [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed on your system.  
-On Linux, you may also need to [add your user to the docker group](https://docs.docker.com/engine/install/linux-postinstall/).
-
-
-### 3) Installation
-
-```bash
-# Create local volumes
-make prepare-dirs
-
-# Start local stack (MinIO, MLflow, Grafana, Postgres, etc.)
-make run-dev
-
-# Download dataset
-make download-data
-
-# Prepare data (merge/clean, split train/valid)
-make prepare-data
-
-# Train & register model
-make register-model
-
-# (Optional) Serve model via FastAPI
-make run-prod
-
-# Smoke test the production API container (starts container and hits /delivery_time)
-make test-prod
-
-# Generate monitoring metrics for Grafana dashboards (run before opening Grafana)
-make backfill
-
-```
-![Project design](img/project_design.png)
-
-**Open UIs**
-
-* MLflow: [http://localhost:5000](http://localhost:5000)
-* MinIO: [http://localhost:9001](http://localhost:9001)
-* Grafana: [http://localhost:3000](http://localhost:3000)
-
-
-> Need the full runbook with explanations and extra commands? See [**Contributing (full runbook in collapsibles)**](#contributing-full-runbook-in-collapsibles) below
-
-
-## Contributing (full runbook in collapsibles)
-<details>
-<summary><b>Open to newcomers. Follow this runbook to reproduce, learn, and extend.</b></summary>
+## Development Setup
 
 ### Directory Structure
 ```
@@ -148,9 +70,13 @@ make backfill
         └── test_prepare_data.py      # Unit tests for preprocessing logic
 ```
 
-### Development Setup (host)
+### Clone and prepare
+```bash
+git clone https://github.com/alex-sokolov2011/delivery-time-prediction-mlops.git
+cd delivery-time-prediction-mlops
+```
 
-#### Data preparation pipeline
+### Data preparation pipeline
 
 To ensure everything runs the same way across machines, the project includes Makefile targets for setup and reproducibility.
 
@@ -219,11 +145,11 @@ The model artifact is also saved to a local S3-compatible store (MinIO), and vis
 
 ![MinIO model artifact](./img/minio_model_artifact.png)
 
-#### Testing
+### Testing
 
 Before moving on to code style checks and deployment, we run unit and integration tests to make sure everything works as expected
 
-##### Unit tests
+#### Unit tests
 
 ```bash
 make test
@@ -231,7 +157,7 @@ make test
 
 This executes test_prepare_data in src/tests/, including checks for data preprocessing logic
 
-##### Integration tests
+#### Integration tests
 
 These validate how different parts of the pipeline work together - for example, S3 interactions and batch prediction
 
@@ -252,7 +178,7 @@ These tests ensure that:
 - MinIO (via LocalStack) correctly simulates S3
 - the model can be applied outside of training
 
-#### Code quality & formatting
+### Code quality & formatting
 
 To ensure clean and consistent code style, we use:
 
@@ -278,11 +204,11 @@ make format
 This will reformat files using isort and black:
 
 
-#### Model deployment
+### Model deployment
 
 Once the model is trained and registered, we can package it into a production-ready API using FastAPI and Docker
 
-##### Build the production image
+#### Build the production image
 
 Use the following command to build the image from `services/production/Dockerfile`:
 
@@ -299,12 +225,12 @@ This will:
 
 > You can also tag and push this image to your own Docker registry, if needed
 
-##### Run FastAPI locally in Docker
+#### Run FastAPI locally in Docker
 ```bash
 make run-prod
 ```
 
-##### Run production test locally
+#### Run production test locally
 
 Before pushing the image to a Docker registry, it's good practice to **validate the production build end-to-end**
 
@@ -320,7 +246,7 @@ make test-prod
 This ensures the containerized model is healthy and serving real predictions - exactly as it will in production
 
 
-##### Push the image to Docker Hub
+#### Push the image to Docker Hub
 
 Once you've verified the production image works locally, you can push it to Docker Hub (or any other registry).
 
@@ -337,7 +263,7 @@ make prepare-prod
 
 After the push completes, your FastAPI model will be available remotely and ready for deployment
 
-#### Model monitoring
+### Model monitoring
 
 To monitor prediction quality over time, we use **Grafana dashboards fed by Evidently reports**.  
 These reports are generated weekly using a script that simulates real production usage.
@@ -367,7 +293,7 @@ This gives you visibility into how model performance and data quality evolve ove
 
 ![Grafana Dashboard](img/grafana.png)
 
-#### Pre-commit message hook
+### Pre-commit message hook
 
 To enforce commit message conventions across the team (or just for yourself), we include a local Git hook that checks message prefixes.
 
@@ -379,7 +305,7 @@ make setup-commit-hook
 This adds a commit-msg hook that allows only messages starting with:
 `Feature:, Fix:, Refactor:, Docs:, Test:, Chore:, Style:, Perf:, Revert:, WIP`
 
-##### Example usage
+#### Example usage
 
 Try a bad commit (should fail):
 ```bash
@@ -392,7 +318,7 @@ make test-good-commit
 ```
 > Helps enforce meaningful commit history and team-wide consistency
 
-#### Makefile automation
+### Makefile automation
 
 The entire workflow is streamlined via a clean and readable [Makefile](./Makefile),  
 which lets you run all the key project tasks with simple commands.
@@ -404,7 +330,7 @@ make help
 ```
 This will print a list of documented commands with short descriptions - helpful for onboarding or revisiting the project later.
 
-#### CI/CD pipeline
+### CI/CD pipeline
 
 A GitHub Actions workflow is included to automate testing and validation on every push and pull request to the `main` branch.
 
@@ -434,11 +360,11 @@ Examples from real CI runs:
 > ⚠️ Note: For reproducibility, this repository includes a ready-to-use `.env` file with prefilled keys.  
 > In production projects it’s better practice to provide only a `.env.example` and keep real credentials out of version control.
 
-#### Prefect orchestration
+### Prefect orchestration
 
 We use **Prefect 3** to orchestrate the data preparation pipeline and demonstrate scheduled automation in a production-like setting.
 
-##### Run once (ad-hoc execution)
+#### Run once (ad-hoc execution)
 
 You can trigger the pipeline manually by executing:
 
@@ -455,7 +381,7 @@ This runs the flow defined in [`prefect_prepare_data.py`](src/prefect_prepare_da
 
 The Prefect UI will show a new run and detailed logs.
 
-##### Run with Prefect server and scheduler
+#### Run with Prefect server and scheduler
 
 To launch full orchestration with scheduling and workers:
 
@@ -489,11 +415,11 @@ This uses [`prefect_deploy_prepare.py`](src/prefect_deploy_prepare.py) to regist
 
 ![Prefect Deployment](img/prefect_deployment.png)
 
-### Future improvements
+## Future improvements
 
 - Prefect-based orchestration full pipeline with Prometheus (not implemented)
 
-### Rules
+## Rules
 - Commit messages must start with one of:
   `Feature:, Fix:, Refactor:, Docs:, Test:, Chore:, Style:, Perf:, Revert:, WIP:`
 - Install the local commit-msg hook:
@@ -503,7 +429,7 @@ This uses [`prefect_deploy_prepare.py`](src/prefect_deploy_prepare.py) to regist
 - Do not add heavy dependencies without a reason. Prefer small, standard tools.
 - Keep configs in `src/config.yml`, avoid hardcoded paths in code.
 
-### Coding hints
+## Coding hints
 
 - Change features & cleaning in `src/prepare_data.py`
 - Switch/tune model in `hyperopt_params_search.py` and `register_model.py`
@@ -512,19 +438,14 @@ This uses [`prefect_deploy_prepare.py`](src/prefect_deploy_prepare.py) to regist
 - Track experiments and artifacts with MLflow (UI at :5000)
 - Use deterministic installs in images via **uv** (already configured in Dockerfiles)
 
-</details>
+## How to Contribute
 
-## Project legend
-This project started as a practical answer to a real request from a friend running an e-commerce shop: _“Can we predict delivery ETAs reliably without a full DS/MLOps team?”_  
-The result is a **laptop-only, cloud-ready** scaffold with local S3 (MinIO), MLflow, FastAPI, and Grafana. You can start simple, collect data, and gradually evolve the stack as the team grows (analyst → DS → MLE), without throwing work away.  
-The project was originally implemented as the final capstone project of the [MLOps Zoomcamp](https://datatalks.club/) by DataTalks.Club, the repo is now maintained as a **lightweight template** for newcomers and practitioners who want a clean, reproducible end-to-end setup.
+1. Fork the repository
+2. Create a feature branch:
 
-
-## Questions?
-- Open an **Issue** in this repo with a short description and steps to reproduce
-- For general questions or networking, see contact links in my **[overview profile](https://github.com/alex-sokolov2011)** 
-
-## License
-This project is released under the **MIT License**.  
-See [LICENSE](./LICENSE) for details.
-
+   ```bash
+   git checkout -b Feature/my-new-feature
+   ```
+3. Commit with a proper prefix (see Rules above)
+4. Push your branch and open a Pull Request
+5. Ensure CI checks pass before requesting review
