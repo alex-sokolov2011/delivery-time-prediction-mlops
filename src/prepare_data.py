@@ -9,8 +9,8 @@ from utils import get_config, filter_df_by_date
 
 def preprocess_orders(df, filter_threshold=None):
     df['delivery_time'] = (
-        pd.to_datetime(df['order_delivered_customer_date']) -
-        pd.to_datetime(df['order_purchase_timestamp'])
+        pd.to_datetime(df['order_delivered_customer_date'])
+        - pd.to_datetime(df['order_purchase_timestamp'])
     ).dt.days
     if filter_threshold is None:
         filter_threshold = df['delivery_time'].quantile(0.95)
@@ -79,21 +79,22 @@ def prepare_data(root_dir, start_date, end_date, dataset_dir=None):
                 columns={
                     'geolocation_zip_code_prefix': 'customer_zip_code_prefix',
                     'geolocation_lat': 'customer_lat',
-                    'geolocation_lng': 'customer_lng'
+                    'geolocation_lng': 'customer_lng',
                 }
             ),
             on='customer_zip_code_prefix',
         )
-
     )
-    delivery_df = delivery_df[[
-        'seller_zip_code_prefix',
-        'customer_lat',
-        'customer_lng',
-        'delivery_time',
-        'purchase_dt'
-    ]]
-    
+    delivery_df = delivery_df[
+        [
+            'seller_zip_code_prefix',
+            'customer_lat',
+            'customer_lng',
+            'delivery_time',
+            'purchase_dt',
+        ]
+    ]
+
     delivery_df.to_csv(result_csv_path, index=False)
     return result_csv_path
 

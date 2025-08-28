@@ -10,9 +10,9 @@ from evidently.report import Report
 from evidently.metrics import (
     ColumnDriftMetric,
     DatasetDriftMetric,
-    DatasetMissingValuesMetric,
     ColumnValueRangeMetric,
     ColumnCorrelationsMetric,
+    DatasetMissingValuesMetric,
 )
 
 from utils import read_data, get_config, get_features
@@ -33,6 +33,7 @@ create table public.model_metrics(
 )
 """
 
+
 def get_features(df, config):
     categorical = config['categorical']
     numerical = config['numerical']
@@ -40,6 +41,7 @@ def get_features(df, config):
     X = df[categorical + numerical]
     y = df[target] if target in df.columns else None
     return X, y
+
 
 def generate_date_ranges(start_date, end_date):
     # Create a date range for each Monday start within the specified range
@@ -75,15 +77,24 @@ def calculate_metrics_postgresql(
 
     prediction_drift = result['metrics'][0]['result']['drift_score']
     num_drifted_columns = result['metrics'][1]['result']['number_of_drifted_columns']
-    share_missing_values = result['metrics'][2]['result']['current']['share_of_missing_values']
+    share_missing_values = result['metrics'][2]['result']['current'][
+        'share_of_missing_values'
+    ]
     value_range_result = result['metrics'][3]['result']['reference']
     value_range_share_in_range = value_range_result.get('share_in_range', 0.0)
 
     correlations_result = result['metrics'][4]['result']
-    pearson_y = correlations_result.get('current', {}).get('pearson', {}).get('values', {}).get('y', [])
+    pearson_y = (
+        correlations_result.get('current', {})
+        .get('pearson', {})
+        .get('values', {})
+        .get('y', [])
+    )
 
     if pearson_y:
-        prediction_corr_with_features = sum(abs(val) for val in pearson_y) / len(pearson_y)
+        prediction_corr_with_features = sum(abs(val) for val in pearson_y) / len(
+            pearson_y
+        )
     else:
         prediction_corr_with_features = 0.0
 
@@ -132,7 +143,6 @@ if __name__ == '__main__':
         ]
     )
 
-
     reference_data_path = os.path.join('/srv/data', 'valid_dataset.csv')
     reference_data_df = pd.read_csv(reference_data_path)
     X, _ = get_features(reference_data_df, config)
@@ -143,7 +153,7 @@ if __name__ == '__main__':
     for start, end in pairs:
         df = read_data(data_path, f'{start.date()}', f'{end.date()}')
         X, _ = get_features(df, config)
-        y_pred = model.predict(X)  
+        y_pred = model.predict(X)
         df['prediction'] = y_pred
 
         with psycopg.connect(
