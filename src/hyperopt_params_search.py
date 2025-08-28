@@ -4,9 +4,9 @@ import sys
 import numpy as np
 import mlflow
 import pandas as pd
+from catboost import CatBoostRegressor
 from hyperopt import STATUS_OK, Trials, hp, tpe, fmin
 from sklearn.metrics import root_mean_squared_error
-from catboost import CatBoostRegressor
 
 from utils import get_model, get_config
 
@@ -29,6 +29,7 @@ def get_features(df, config):
     y = df[target] if target in df.columns else None
     return X, y
 
+
 def get_model(params, categorical):
     model = CatBoostRegressor(
         cat_features=categorical,
@@ -37,6 +38,7 @@ def get_model(params, categorical):
         **params,
     )
     return model
+
 
 def run_optimization(root_data_dir: str, num_trials: int):
     train_data_path = os.path.join(root_data_dir, 'train_dataset.csv')

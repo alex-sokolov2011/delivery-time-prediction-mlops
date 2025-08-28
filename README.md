@@ -8,6 +8,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-serving-brightgreen)
 ![MinIO](https://img.shields.io/badge/MinIO-artifacts-orange)
 ![Grafana](https://img.shields.io/badge/Grafana-monitoring-yellow)
+![Prometheus](https://img.shields.io/badge/Prometheus-monitoring-red)
 
 ---
 
@@ -365,7 +366,17 @@ The dashboards are automatically provisioned and include time-series visualizati
 
 This gives you visibility into how model performance and data quality evolve over time - a core part of real-world MLOps.
 
-![Grafana Dashboard](img/grafana.png)
+![Grafana Dashboard back_fill prediction](img/grafana.png)
+
+We also integrate **Prometheus + Grafana** for real-time API monitoring.  
+Prometheus scrapes metrics from FastAPI (`/metrics` endpoint), and Grafana dashboards visualize:
+- request rate, latency, error codes
+- custom model metrics (prediction counts, delivery time distribution)
+
+![Fast API Dashboard](img/grafana_2.png)
+![Prometheus Dashboard](img/grafana_3.png)
+![Grafana Dashboard](img/grafana_4.png)
+
 
 #### Pre-commit message hook
 
@@ -489,9 +500,11 @@ This uses [`prefect_deploy_prepare.py`](src/prefect_deploy_prepare.py) to regist
 
 ![Prefect Deployment](img/prefect_deployment.png)
 
-### Future improvements
-
-- Prefect-based orchestration full pipeline with Prometheus (not implemented)
+### Current TODO list
+In no particular order, here is the non-exhaustive list of known wanted features :
+- [ ] Prefect-based orchestration full pipeline with Prometheus
+- [x] Prometheus monitoring (basic integration done)
+ 
 
 ### Rules
 - Commit messages must start with one of:

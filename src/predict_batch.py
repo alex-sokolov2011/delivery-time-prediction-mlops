@@ -5,6 +5,7 @@ from catboost import CatBoostRegressor
 
 from utils import read_data, save_data, get_config
 
+
 def get_features(df, config):
     categorical = config['categorical']
     numerical = config['numerical']
@@ -12,6 +13,7 @@ def get_features(df, config):
     X = df[categorical + numerical]
     y = df[target] if target in df.columns else None
     return X, y
+
 
 if __name__ == '__main__':
 

@@ -22,7 +22,8 @@ prepare-dirs: ## Create local directories for mounted volumes (Postgres, MinIO, 
 	mkdir -p ${CURRENT_DIR}/data_store/mlflow || true && \
 	mkdir -p ${CURRENT_DIR}/data_store/dataset || true && \
 	mkdir -p ${CURRENT_DIR}/data_store/prefect || true && \
-	mkdir -p ${CURRENT_DIR}/data_store/grafana || true
+	mkdir -p ${CURRENT_DIR}/data_store/grafana || true && \
+	mkdir -p ${CURRENT_DIR}/data_store/prometheus || true
 
 run-dev: ## Run dev container in detached mode
 	docker compose run -d dev
@@ -111,6 +112,9 @@ run-jupyter: ## Run Jupyter Notebook container in detached mode
 run-dagster: ## Start Dagster webserver for local orchestration
 	dagster-webserver -m services.dagster_code
 
+load-test: ## Run load test against production API and save results
+	docker exec -it ${DEV_ENV} python3 src/integration_tests/load_test.py /srv/src/config.yml
+
 prefect-prepare-data: ## Run Prefect flow for data preparation (merging & splitting datasets)
 	python src/prefect_prepare_data.py
 
@@ -127,6 +131,9 @@ run-prefect-deploy: ## Create Prefect deployment and schedule it (runs until sto
 
 clear-db-dirs: ## Remove local Postgres data directory (clears DB data)
 	rm -rf ${CURRENT_DIR}/data_store/postgres_data || true
+
+clear-prometheus-dirs: ## Remove local Prometheus data directory (clears metrics history)
+	rm -rf ${CURRENT_DIR}/data_store/prometheus || true
 
 build-dev: ## Build Docker image for dev
 	docker compose build dev
