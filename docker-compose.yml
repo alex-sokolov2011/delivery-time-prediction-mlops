@@ -25,6 +25,8 @@ services:
     image: grafana/grafana
     build:
       context: ./services/grafana
+    env_file:
+      - .env
     depends_on:
       - postgres
     ports:
@@ -89,24 +91,6 @@ services:
       --no-browser
       --NotebookApp.token=''
       --NotebookApp.password=''
-  dev:
-    build:
-      context: .
-    depends_on:
-      - mlflow
-      - postgres
-      - grafana
-      - localstack
-    env_file:
-      - .env
-    volumes:
-      - ./data_store:/srv/data
-      - ./src:/srv/src
-    container_name: service
-    ports:
-      - 8010:8000
-    networks:
-      - prj_network
   localstack:
     image: localstack/localstack:latest
     ports:
@@ -121,6 +105,38 @@ services:
     depends_on:
       postgres:
         condition: service_started
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    env_file:
+      - .env
+    volumes:
+      - ./services/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data_store/prometheus:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - prj_network
+    restart: always
+  dev:
+    build:
+      context: .
+    depends_on:
+      - mlflow
+      - postgres
+      - grafana
+      - localstack
+      - prometheus
+    env_file:
+      - .env
+    volumes:
+      - ./data_store:/srv/data
+      - ./src:/srv/src
+    container_name: service
+    ports:
+      - 8010:8000
+    networks:
+      - prj_network
 networks:
   prj_network:
     driver: bridge
