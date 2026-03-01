@@ -1,5 +1,5 @@
 # Delivery Time Prediction - End-to-End MLOps (local S3: MinIO + LocalStack, cloud-ready)
-
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/alex-sokolov2011/delivery-time-prediction-mlops)
 [![License](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![Docker](https://img.shields.io/badge/Docker-ready-informational)
@@ -84,7 +84,7 @@ make backfill
 
 ## Contributing (full runbook in collapsibles)
 <details>
-<summary><b>Open to newcomers. Follow this runbook to reproduce, learn, and extend.</b></summary>
+<summary><b>Open to newcomers. Follow this runbook to reproduce, learn, and extend [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/alex-sokolov2011/delivery-time-prediction-mlops)</b></summary>
 
 ### Directory Structure
 ```
